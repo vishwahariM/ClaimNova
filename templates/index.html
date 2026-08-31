@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaimPulse | Enterprise InsurTech Orchestration SaaS</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="app-dark-body">
+
+    <!-- APP CONTAINER WITH SIDEBAR -->
+    <div class="app-layout">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="app-sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-pulse text-gradient icon-brand"></i>
+                    <span class="brand-title">CLAIMPULSE</span>
+                </div>
+                <span class="brand-tag">INSURTECH ORCHESTRATION</span>
+            </div>
+
+            <nav class="sidebar-menu">
+                <div class="menu-category">MAIN MENU</div>
+                <button class="nav-item active" onclick="switchView('dashboard')" id="nav-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span>
+                </button>
+                <button class="nav-item" onclick="switchView('submit')" id="nav-submit">
+                    <i class="fa-solid fa-paper-plane"></i> <span>Submit Claim</span>
+                </button>
+                <button class="nav-item" onclick="switchView('track')" id="nav-track">
+                    <i class="fa-solid fa-magnifying-glass-location"></i> <span>Track Claim</span>
+                </button>
+                <button class="nav-item" onclick="switchView('claims')" id="nav-claims">
+                    <i class="fa-solid fa-list-check"></i> <span>Claims Queue</span>
+                </button>
+
+                <div class="menu-category mt-4">ENTERPRISE</div>
+                <button class="nav-item" onclick="switchView('officer')" id="nav-officer">
+                    <i class="fa-solid fa-user-shield"></i> <span>Officer Dashboard</span>
+                </button>
+                <button class="nav-item" onclick="switchView('analytics')" id="nav-analytics">
+                    <i class="fa-solid fa-chart-line"></i> <span>Analytics</span>
+                </button>
+                <button class="nav-item" onclick="switchView('how')" id="nav-how">
+                    <i class="fa-solid fa-diagram-project"></i> <span>How It Works</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="db-status-pill" id="dbStatusPill">
+                    <span class="status-dot green"></span>
+                    <span>MongoDB Connected</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT WRAPPER -->
+        <main class="app-main-content">
+            
+            <!-- TOP HEADER BAR -->
+            <header class="app-header">
+                <div class="header-left">
+                    <button class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h2 class="view-title" id="currentViewTitle">Operations Dashboard</h2>
+                </div>
+
+                <div class="header-right">
+                    <div class="global-search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="globalSearchInput" placeholder="Quick Search Claim ID or Customer..." onkeypress="handleGlobalSearch(event)">
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="switchView('submit')">
+                        <i class="fa-solid fa-plus"></i> New Claim
+                    </button>
+                </div>
+            </header>
+
+            <!-- VIEW CONTAINER -->
+            <div class="view-container">
+
+                <!-- 1. MAIN DASHBOARD VIEW -->
+                <section class="view-pane active" id="view-dashboard">
+                    <!-- 6 STAT METRIC CARDS -->
+                    <div class="stats-overview-grid mb-4">
+                        <div class="dash-stat-card">
+                            <div class="stat-icon icon-blue"><i class="fa-solid fa-folder-tree"></i></div>
+                            <div class="stat-details">
+                                <span class="stat-val" id="dashTotalClaims">0</span>
+                                <span class="stat-lbl">TOTAL CLAIMS</span>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card">
+                            <div class="stat-icon icon-orange"><i class="fa-solid fa-clock"></i></div>
+                            <div class="stat-details">
+                                <span class="stat-val" id="dashPendingClaims">0</span>
+                                <span class="stat-lbl">PENDING REVIEW</span>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card">
+                            <div class="stat-icon icon-green"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="stat-details">
+                                <span class="stat-val" id="dashApprovedClaims">0</span>
+                                <span class="stat-lbl">APPROVED CLAIMS</span>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card">
+                            <div class="stat-icon icon-red"><i class="fa-solid fa-circle-xmark"></i></div>
+                            <div class="stat-details">
+                                <span class="stat-val" id="dashRejectedClaims">0</span>
+                                <span class="stat-lbl">REJECTED CLAIMS</span>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card">
+                            <div class="stat-icon icon-red-glow"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="stat-details">
+                                <span class="stat-val" id="dashHighRiskClaims">0</span>
+                                <span class="stat-lbl">HIGH RISK CLAIMS</span>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card">
+                            <div class="stat-icon icon-violet"><i class="fa-solid fa-file-circle-exclamation"></i></div>
+                            <div class="stat-details">
+                                <span class="stat-val" id="dashDocsReqClaims">0</span>
+                                <span class="stat-lbl">DOCS REQUIRED</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DASHBOARD VISUALIZATIONS & ACTIVITY GRID -->
+                    <div class="dashboard-visual-grid mb-4">
+                        <!-- CHART 1: RISK BREAKDOWN -->
+                        <div class="visual-card glass-panel">
+                            <div class="visual-header">
+                                <h4><i class="fa-solid fa-brain text-blue"></i> Risk Level Breakdown</h4>
+                                <span class="sub-label">Live distribution</span>
+                            </div>
+                            <div class="chart-bars-container" id="riskChartContainer">
+                                <!-- Injected -->
+                            </div>
+                        </div>
+
+                        <!-- CHART 2: STATUS DISTRIBUTION -->
+                        <div class="visual-card glass-panel">
+                            <div class="visual-header">
+                                <h4><i class="fa-solid fa-bars-staggered text-violet"></i> Claim Status Distribution</h4>
+                                <span class="sub-label">Pipeline volume</span>
+                            </div>
+                            <div class="chart-bars-container" id="statusChartContainer">
+                                <!-- Injected -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RECENT CLAIMS TABLE & ACTIVITY FEED -->
+                    <div class="dashboard-tables-grid">
+                        <div class="table-card glass-panel flex-grow-2">
+                            <div class="table-card-header flex-between">
+                                <h3><i class="fa-solid fa-list-check"></i> Recent Claim Intake</h3>
+                                <button class="btn btn-secondary btn-sm" onclick="switchView('claims')">View All Queue <i class="fa-solid fa-arrow-right"></i></button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="claims-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Claim ID</th>
+                                            <th>Customer</th>
+                                            <th>Type</th>
+                                            <th>Amount</th>
+                                            <th>Risk</th>
+                                            <th>Status</th>
+                                            <th class="text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashRecentTbody">
+                                        <tr><td colspan="7" class="text-center py-4 text-muted">Loading recent intake...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- RECENT ACTIVITY LOG -->
+                        <div class="activity-card glass-panel">
+                            <div class="table-card-header">
+                                <h3><i class="fa-solid fa-clock-rotate-left"></i> System Activity Feed</h3>
+                            </div>
+                            <ul class="activity-feed-list" id="dashActivityFeed">
+                                <li class="text-muted text-center py-3">Loading system events...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. SUBMIT CLAIM WIZARD VIEW -->
+                <section class="view-pane hidden" id="view-submit">
+                    <div class="wizard-wrapper glass-panel">
+                        <div class="section-header center-text mb-4">
+                            <span class="subhead">FAST-TRACK INTAKE WIZARD</span>
+                            <h2 class="section-title text-white">Submit a <span class="gradient-text">New Claim</span></h2>
+                            <p class="section-subtitle text-gray">5-step guided intake wizard with Explainable AI Pre-Check simulation.</p>
+                        </div>
+
+                        <div class="wizard-header">
+                            <div class="wizard-step-node active" id="node-step1">
+                                <span class="node-num">01</span>
+                                <span class="node-lbl">Information</span>
+                            </div>
+                            <div class="wizard-line"></div>
+                            <div class="wizard-step-node" id="node-step2">
+                                <span class="node-num">02</span>
+                                <span class="node-lbl">Policy</span>
+                            </div>
+                            <div class="wizard-line"></div>
+                            <div class="wizard-step-node" id="node-step3">
+                                <span class="node-num">03</span>
+                                <span class="node-lbl">Documents</span>
+                            </div>
+                            <div class="wizard-line"></div>
+                            <div class="wizard-step-node" id="node-step4">
+                                <span class="node-num">04</span>
+                                <span class="node-lbl">AI Pre-Check</span>
+                            </div>
+                            <div class="wizard-line"></div>
+                            <div class="wizard-step-node" id="node-step5">
+                                <span class="node-num">05</span>
+                                <span class="node-lbl">Submit</span>
+                            </div>
+                        </div>
+
+                        <form id="wizardForm">
+                            <!-- STEP 1 -->
+                            <div class="wizard-pane active" id="pane-step1">
+                                <h3><i class="fa-solid fa-user"></i> Step 1: Customer Details</h3>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="customerName">Customer Full Name *</label>
+                                        <input type="text" id="customerName" placeholder="e.g. Rahul Kumar" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="contactNumber">Contact Phone *</label>
+                                        <input type="tel" id="contactNumber" placeholder="e.g. 9876543210" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="incidentDate">Date of Incident *</label>
+                                        <input type="date" id="incidentDate" required>
+                                    </div>
+                                </div>
+                                <div class="wizard-actions">
+                                    <button type="button" class="btn btn-primary" onclick="goToStep(2)">Next: Policy Info <i class="fa-solid fa-arrow-right"></i></button>
+                                </div>
+                            </div>
+
+                            <!-- STEP 2 -->
+                            <div class="wizard-pane hidden" id="pane-step2">
+                                <h3><i class="fa-solid fa-id-card"></i> Step 2: Policy & Claim Amount</h3>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="policyNumber">Policy Number *</label>
+                                        <input type="text" id="policyNumber" placeholder="e.g. POL-884920" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="claimType">Claim Category *</label>
+                                        <select id="claimType" required>
+                                            <option value="" disabled selected>Select Claim Category</option>
+                                            <option value="Health Insurance">Health Insurance</option>
+                                            <option value="Vehicle Insurance">Vehicle Insurance</option>
+                                            <option value="Travel Insurance">Travel Insurance</option>
+                                            <option value="Property Insurance">Property Insurance</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="claimAmount">Claim Amount (₹) *</label>
+                                        <input type="number" id="claimAmount" placeholder="e.g. 85000" min="1" required>
+                                    </div>
+                                </div>
+                                <div class="wizard-actions flex-between">
+                                    <button type="button" class="btn btn-secondary" onclick="goToStep(1)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                                    <button type="button" class="btn btn-primary" onclick="goToStep(3)">Next: Select Attachments <i class="fa-solid fa-arrow-right"></i></button>
+                                </div>
+                            </div>
+
+                            <!-- STEP 3 -->
+                            <div class="wizard-pane hidden" id="pane-step3">
+                                <h3><i class="fa-solid fa-paperclip"></i> Step 3: Select Attached Documents</h3>
+                                <div class="doc-selection-box">
+                                    <p class="sub-label">Select mandatory document attachments included in this submission:</p>
+                                    <div class="checkbox-grid" id="documentCheckboxes">
+                                        <p class="select-prompt">Please select a Claim Category in Step 2 to view checklist.</p>
+                                    </div>
+                                </div>
+                                <div class="wizard-actions flex-between">
+                                    <button type="button" class="btn btn-secondary" onclick="goToStep(2)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                                    <button type="button" class="btn btn-primary" onclick="runAIPreCheck()"><i class="fa-solid fa-microchip"></i> Run AI Pre-Check <i class="fa-solid fa-arrow-right"></i></button>
+                                </div>
+                            </div>
+
+                            <!-- STEP 4 -->
+                            <div class="wizard-pane hidden" id="pane-step4">
+                                <h3><i class="fa-solid fa-brain"></i> Step 4: Explainable AI Pre-Check</h3>
+                                <p class="sub-label">Our Rule-Based Engine evaluates parameters before database insertion:</p>
+
+                                <div class="precheck-card" id="precheckLoading">
+                                    <i class="fa-solid fa-spinner fa-spin icon-lg text-blue"></i>
+                                    <p>Running Explainable AI Pre-Check...</p>
+                                </div>
+
+                                <div class="precheck-result-grid hidden" id="precheckResult">
+                                    <div class="res-box">
+                                        <span class="box-lbl">CLAIM READINESS</span>
+                                        <span class="box-val" id="preReadiness">94%</span>
+                                    </div>
+                                    <div class="res-box">
+                                        <span class="box-lbl">RISK RATING</span>
+                                        <span class="risk-badge risk-low" id="preRisk">LOW</span>
+                                    </div>
+                                    <div class="res-box">
+                                        <span class="box-lbl">MISSING DOCUMENTS</span>
+                                        <span class="box-val text-warning" id="preMissing">None</span>
+                                    </div>
+                                    <div class="res-box">
+                                        <span class="box-lbl">NEXT-BEST ACTION</span>
+                                        <span class="box-val text-blue" id="preNextAction">Proceed for Fast-Track Review</span>
+                                    </div>
+                                </div>
+
+                                <div class="wizard-actions flex-between">
+                                    <button type="button" class="btn btn-secondary" onclick="goToStep(3)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                                    <button type="button" class="btn btn-primary" onclick="goToStep(5)">Confirm & Submit Claim <i class="fa-solid fa-arrow-right"></i></button>
+                                </div>
+                            </div>
+
+                            <!-- STEP 5 -->
+                            <div class="wizard-pane hidden" id="pane-step5">
+                                <div class="text-center py-4">
+                                    <i class="fa-solid fa-database icon-lg text-blue mb-3"></i>
+                                    <h3>Ready to Insert into MongoDB</h3>
+                                    <p class="text-muted mb-4">Click below to record this claim in the system database and trigger workflow routing.</p>
+                                    
+                                    <button type="submit" class="btn btn-primary btn-lg" id="finalSubmitBtn">
+                                        <i class="fa-solid fa-circle-check"></i> Submit Claim
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- RESULT CARD -->
+                        <div class="result-card hidden" id="submissionResult">
+                            <div class="result-header">
+                                <i class="fa-solid fa-circle-check icon-success"></i>
+                                <div>
+                                    <h3>Claim Submitted & Analyzed Successfully!</h3>
+                                    <p>Assigned Claim ID: <strong id="resClaimId" class="text-gradient">CP-00001</strong></p>
+                                </div>
+                            </div>
+                            
+                            <div class="result-details-grid">
+                                <div class="res-item">
+                                    <span>Status:</span> <strong id="resStatus">Submitted</strong>
+                                </div>
+                                <div class="res-item">
+                                    <span>Readiness Score:</span> <strong id="resReadiness">94%</strong>
+                                </div>
+                                <div class="res-item">
+                                    <span>Risk Rating:</span> <span id="resRiskBadge" class="risk-badge">LOW</span>
+                                </div>
+                                <div class="res-item">
+                                    <span>Next-Best Action:</span> <strong id="resRecommendation" class="text-blue">Proceed for Officer Review</strong>
+                                </div>
+                            </div>
+
+                            <div class="res-section">
+                                <h4><i class="fa-solid fa-list-check"></i> Document Verification:</h4>
+                                <p><strong>Required:</strong> <span id="resRequiredDocs">-</span></p>
+                                <p class="text-danger"><strong>Missing:</strong> <span id="resMissingDocs">None</span></p>
+                            </div>
+
+                            <div class="res-section">
+                                <h4><i class="fa-solid fa-brain"></i> Explainable Factors ("Why this decision?"):</h4>
+                                <ul id="resFindingsList">
+                                    <!-- Injected -->
+                                </ul>
+                            </div>
+
+                            <div class="flex-gap mt-4">
+                                <button class="btn btn-primary" onclick="trackNewClaim()"><i class="fa-solid fa-location-arrow"></i> Track Claim Status</button>
+                                <button class="btn btn-secondary" id="resetWizardBtn"><i class="fa-solid fa-rotate-right"></i> Submit Another Claim</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. TRACK CLAIM VIEW -->
+                <section class="view-pane hidden" id="view-track">
+                    <div class="container">
+                        <div class="section-header center-text">
+                            <span class="subhead color-violet">REAL-TIME STATUS</span>
+                            <h2 class="section-title text-white">Track Claim <span class="gradient-text-alt">Status</span></h2>
+                            <p class="section-subtitle text-gray">Enter your assigned Claim ID (e.g. CP-00001) to check live status and 6-stage visual timeline.</p>
+                        </div>
+
+                        <div class="track-search-box">
+                            <div class="search-input-group">
+                                <i class="fa-solid fa-hashtag search-icon"></i>
+                                <input type="text" id="trackClaimId" placeholder="Enter Claim ID (e.g., CP-00001)">
+                                <button class="btn btn-primary" id="trackBtn">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Track Claim
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="track-result-container hidden" id="trackResult">
+                            <div class="track-card glass-panel">
+                                <div class="track-card-header">
+                                    <div>
+                                        <span class="card-claim-id" id="trClaimId">CP-00001</span>
+                                        <span class="card-customer" id="trCustomer">Rahul Kumar</span>
+                                    </div>
+                                    <div id="trRiskBadgeContainer">
+                                        <span class="risk-badge risk-medium" id="trRiskBadge">MEDIUM</span>
+                                    </div>
+                                </div>
+
+                                <div class="timeline-wrapper">
+                                    <div class="timeline-step" id="step-submitted">
+                                        <div class="dot"><i class="fa-solid fa-check"></i></div>
+                                        <span class="step-lbl">SUBMITTED</span>
+                                    </div>
+                                    <div class="timeline-line"></div>
+                                    <div class="timeline-step" id="step-analysis">
+                                        <div class="dot"><i class="fa-solid fa-check"></i></div>
+                                        <span class="step-lbl">AI ANALYSIS</span>
+                                    </div>
+                                    <div class="timeline-line"></div>
+                                    <div class="timeline-step" id="step-doc-check">
+                                        <div class="dot"><i class="fa-solid fa-check"></i></div>
+                                        <span class="step-lbl">DOCUMENT CHECK</span>
+                                    </div>
+                                    <div class="timeline-line"></div>
+                                    <div class="timeline-step" id="step-officer">
+                                        <div class="dot"><i class="fa-solid fa-user-shield"></i></div>
+                                        <span class="step-lbl">OFFICER DECISION</span>
+                                    </div>
+                                    <div class="timeline-line"></div>
+                                    <div class="timeline-step" id="step-resolution">
+                                        <div class="dot"><i class="fa-solid fa-flag-checkered"></i></div>
+                                        <span class="step-lbl">RESOLUTION</span>
+                                    </div>
+                                </div>
+
+                                <div class="track-info-grid">
+                                    <div class="info-cell">
+                                        <span class="info-lbl">Policy Number</span>
+                                        <span class="info-val" id="trPolicy">-</span>
+                                    </div>
+                                    <div class="info-cell">
+                                        <span class="info-lbl">Claim Type</span>
+                                        <span class="info-val" id="trType">-</span>
+                                    </div>
+                                    <div class="info-cell">
+                                        <span class="info-lbl">Claim Amount</span>
+                                        <span class="info-val text-gradient" id="trAmount">-</span>
+                                    </div>
+                                    <div class="info-cell">
+                                        <span class="info-lbl">Claim Readiness</span>
+                                        <span class="info-val text-success" id="trReadiness">-</span>
+                                    </div>
+                                    <div class="info-cell">
+                                        <span class="info-lbl">Current Status</span>
+                                        <span class="info-val text-blue" id="trStatus">Submitted</span>
+                                    </div>
+                                    <div class="info-cell">
+                                        <span class="info-lbl">Next-Best Action</span>
+                                        <span class="info-val" id="trRecommendation">-</span>
+                                    </div>
+                                </div>
+
+                                <div class="track-findings-box">
+                                    <h4><i class="fa-solid fa-brain"></i> AI Findings & Contributing Factors</h4>
+                                    <ul id="trFindingsList">
+                                        <!-- Injected -->
+                                    </ul>
+                                </div>
+
+                                <div class="track-docs-box">
+                                    <h4><i class="fa-solid fa-clock-rotate-left"></i> Activity Timeline</h4>
+                                    <ul class="activity-timeline-list" id="trActivityTimeline">
+                                        <!-- Injected -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="track-error hidden" id="trackError">
+                            <i class="fa-solid fa-circle-exclamation icon-lg text-danger"></i>
+                            <h4 id="trackErrorMsg">Claim not found. Please verify the Claim ID.</h4>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. CLAIMS QUEUE VIEW -->
+                <section class="view-pane hidden" id="view-claims">
+                    <div class="filter-controls-bar glass-panel mb-4">
+                        <div class="filter-search-group">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="filterSearch" placeholder="Search by Claim ID, Customer, or Policy...">
+                        </div>
+
+                        <div class="filter-dropdowns">
+                            <select id="filterRisk">
+                                <option value="ALL">All Risk Levels</option>
+                                <option value="HIGH">High Risk</option>
+                                <option value="MEDIUM">Medium Risk</option>
+                                <option value="LOW">Low Risk</option>
+                            </select>
+
+                            <select id="filterStatus">
+                                <option value="ALL">All Statuses</option>
+                                <option value="Submitted">Submitted</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+
+                            <select id="filterType">
+                                <option value="ALL">All Categories</option>
+                                <option value="Health Insurance">Health Insurance</option>
+                                <option value="Vehicle Insurance">Vehicle Insurance</option>
+                                <option value="Travel Insurance">Travel Insurance</option>
+                                <option value="Property Insurance">Property Insurance</option>
+                            </select>
+
+                            <select id="filterSort">
+                                <option value="newest">Sort: Newest First</option>
+                                <option value="priority">Sort: Highest Priority</option>
+                                <option value="highest_risk">Sort: Highest Risk Score</option>
+                                <option value="highest_amount">Sort: Highest Amount</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-card glass-panel">
+                        <div class="table-responsive">
+                            <table class="claims-table">
+                                <thead>
+                                    <tr>
+                                        <th>Claim ID</th>
+                                        <th>Customer</th>
+                                        <th>Category</th>
+                                        <th>Amount</th>
+                                        <th>Risk</th>
+                                        <th>Readiness</th>
+                                        <th>Next-Best Action</th>
+                                        <th>Status</th>
+                                        <th class="text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="claimsQueueTbody">
+                                    <tr><td colspan="9" class="text-center py-4 text-muted">Loading queue...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. OFFICER COMMAND CENTER VIEW -->
+                <section class="view-pane hidden" id="view-officer">
+                    <div class="section-header flex-between mb-4">
+                        <div>
+                            <span class="subhead">ENTERPRISE COMMAND CENTER</span>
+                            <h2 class="section-title text-white">Officer Operations <span class="gradient-text">Center</span></h2>
+                            <p class="section-subtitle text-gray">Review priority cases, inspect evidence breakdowns, and execute MongoDB status decisions.</p>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="loadOfficerDashboard()">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh Queue
+                        </button>
+                    </div>
+
+                    <!-- PRIORITY REVIEW QUEUE -->
+                    <div class="priority-queue-box mb-4">
+                        <div class="prio-header">
+                            <h4><i class="fa-solid fa-fire text-danger"></i> Priority Review Queue</h4>
+                            <span class="sub-label">URGENT CASES (CRITICAL & HIGH PRIORITY)</span>
+                        </div>
+                        <div class="prio-cards-container" id="priorityQueueContainer">
+                            <p class="text-muted p-3">No critical cases pending.</p>
+                        </div>
+                    </div>
+
+                    <div class="table-card glass-panel">
+                        <div class="table-card-header">
+                            <h3><i class="fa-solid fa-folder-open"></i> Full Operations Queue</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="claims-table">
+                                <thead>
+                                    <tr>
+                                        <th>Claim ID</th>
+                                        <th>Customer</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Risk</th>
+                                        <th>Readiness</th>
+                                        <th>Status</th>
+                                        <th class="text-right">Officer Decisions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="officerTbody">
+                                    <tr><td colspan="8" class="text-center py-4 text-muted">Loading officer queue...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. ANALYTICS VIEW -->
+                <section class="view-pane hidden" id="view-analytics">
+                    <div class="section-header center-text mb-4">
+                        <span class="subhead color-violet">DYNAMIC METRICS</span>
+                        <h2 class="section-title text-white">System <span class="gradient-text-alt">Analytics</span></h2>
+                        <p class="section-subtitle text-gray">Operational insights calculated live from MongoDB claim records.</p>
+                    </div>
+
+                    <div class="analytics-top-grid mb-4">
+                        <div class="analytics-metric-card glass-panel">
+                            <span class="an-lbl">TOTAL CLAIM VOLUME</span>
+                            <span class="an-val text-gradient" id="anTotalVolume">₹0</span>
+                        </div>
+                        <div class="analytics-metric-card glass-panel">
+                            <span class="an-lbl">CLAIMS PROCESSED</span>
+                            <span class="an-val" id="anTotalProcessed">0</span>
+                        </div>
+                        <div class="analytics-metric-card glass-panel">
+                            <span class="an-lbl">HIGH RISK RATE</span>
+                            <span class="an-val text-danger" id="anHighRiskPct">0%</span>
+                        </div>
+                        <div class="analytics-metric-card glass-panel">
+                            <span class="an-lbl">APPROVAL RATE</span>
+                            <span class="an-val text-success" id="anApprovalPct">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="analytics-charts-grid">
+                        <div class="visual-card glass-panel">
+                            <h4><i class="fa-solid fa-layer-group text-blue"></i> Claims by Category</h4>
+                            <div class="chart-bars-container mt-3" id="anCategoryChart">
+                                <!-- Injected -->
+                            </div>
+                        </div>
+
+                        <div class="visual-card glass-panel">
+                            <h4><i class="fa-solid fa-chart-pie text-violet"></i> Claims by Status</h4>
+                            <div class="chart-bars-container mt-3" id="anStatusChart">
+                                <!-- Injected -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. HOW IT WORKS VIEW -->
+                <section class="view-pane hidden" id="view-how">
+                    <div class="solution-section dark-bg">
+                        <div class="container">
+                            <div class="section-header center-text">
+                                <span class="subhead color-violet">AUTOMATED PIPELINE</span>
+                                <h2 class="section-title text-white">How ClaimPulse <span class="gradient-text-alt">Resolves Friction</span></h2>
+                                <p class="section-subtitle text-gray">End-to-end transparent process from submission to resolution.</p>
+                            </div>
+
+                            <div class="pipeline-flow-wrapper mt-4">
+                                <div class="pipeline-track">
+                                    <div class="flow-step">
+                                        <div class="flow-icon"><i class="fa-solid fa-file-import"></i></div>
+                                        <span class="flow-label">UNDERSTAND</span>
+                                    </div>
+                                    <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                    <div class="flow-step">
+                                        <div class="flow-icon icon-glow"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                                        <span class="flow-label">DETECT</span>
+                                    </div>
+                                    <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                    <div class="flow-step">
+                                        <div class="flow-icon"><i class="fa-solid fa-brain"></i></div>
+                                        <span class="flow-label">DECIDE</span>
+                                    </div>
+                                    <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                    <div class="flow-step">
+                                        <div class="flow-icon icon-glow"><i class="fa-solid fa-route"></i></div>
+                                        <span class="flow-label">ROUTE</span>
+                                    </div>
+                                    <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                    <div class="flow-step highlight">
+                                        <div class="flow-icon"><i class="fa-solid fa-circle-check"></i></div>
+                                        <span class="flow-label">RESOLVE</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ARCHITECTURE -->
+                            <div class="arch-container mt-5">
+                                <div class="arch-box box-ai">
+                                    <span class="arch-title">CLAIMPULSE AI DECISION ENGINE</span>
+                                    <div class="arch-pills">
+                                        <span>UNDERSTAND</span>
+                                        <span>DETECT</span>
+                                        <span>DECIDE</span>
+                                        <span>ROUTE</span>
+                                    </div>
+                                </div>
+
+                                <div class="arch-arrow"><i class="fa-solid fa-chevron-down"></i></div>
+
+                                <div class="arch-box box-newgen">
+                                    <span class="arch-title">NEWGENONE WORKFLOW LAYER</span>
+                                    <div class="arch-features-grid">
+                                        <div class="arch-feat"><i class="fa-solid fa-inbox"></i> Intake</div>
+                                        <div class="arch-feat"><i class="fa-solid fa-folder-plus"></i> Case Creation</div>
+                                        <div class="arch-feat"><i class="fa-solid fa-user-plus"></i> Task Routing</div>
+                                        <div class="arch-feat"><i class="fa-solid fa-box-archive"></i> Audit Log</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- OFFICER CLAIM DETAIL WORKSPACE MODAL -->
+    <div class="modal-overlay hidden" id="caseModalOverlay">
+        <div class="modal-workspace glass-panel">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h2 id="modalClaimId">CP-00001</h2>
+                    <span class="card-customer" id="modalCustomer">Rahul Kumar</span>
+                    <span class="risk-badge risk-medium" id="modalRiskBadge">MEDIUM</span>
+                </div>
+                <button class="modal-close-btn" onclick="closeCaseModal()">&times;</button>
+            </div>
+
+            <div class="modal-tabs">
+                <button class="tab-btn active" onclick="switchModalTab('overview')"><i class="fa-solid fa-circle-info"></i> Overview</button>
+                <button class="tab-btn" onclick="switchModalTab('documents')"><i class="fa-solid fa-file-shield"></i> Documents</button>
+                <button class="tab-btn" onclick="switchModalTab('risk')"><i class="fa-solid fa-brain"></i> AI Risk Breakdown</button>
+                <button class="tab-btn" onclick="switchModalTab('exceptions')"><i class="fa-solid fa-triangle-exclamation"></i> Exceptions</button>
+                <button class="tab-btn" onclick="switchModalTab('timeline')"><i class="fa-solid fa-clock-rotate-left"></i> Activity Log</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="tab-pane active" id="pane-overview">
+                    <div class="modal-info-grid">
+                        <div class="info-cell">
+                            <span class="info-lbl">Policy Number</span>
+                            <span class="info-val" id="mdPolicy">-</span>
+                        </div>
+                        <div class="info-cell">
+                            <span class="info-lbl">Claim Type</span>
+                            <span class="info-val" id="mdType">-</span>
+                        </div>
+                        <div class="info-cell">
+                            <span class="info-lbl">Claim Amount</span>
+                            <span class="info-val text-gradient" id="mdAmount">-</span>
+                        </div>
+                        <div class="info-cell">
+                            <span class="info-lbl">Incident Date</span>
+                            <span class="info-val" id="mdIncidentDate">-</span>
+                        </div>
+                        <div class="info-cell">
+                            <span class="info-lbl">Contact Phone</span>
+                            <span class="info-val" id="mdContact">-</span>
+                        </div>
+                        <div class="info-cell">
+                            <span class="info-lbl">Current Stage</span>
+                            <span class="info-val text-blue" id="mdStage">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane hidden" id="pane-documents">
+                    <div class="res-section">
+                        <h4>Mandatory Document Checklist:</h4>
+                        <p><strong>Required Documents:</strong> <span id="mdRequiredDocs">-</span></p>
+                        <p><strong>Submitted Documents:</strong> <span id="mdSubmittedDocs">-</span></p>
+                        <p class="text-danger"><strong>Missing Documents:</strong> <span id="mdMissingDocs">None</span></p>
+                    </div>
+                </div>
+
+                <div class="tab-pane hidden" id="pane-risk">
+                    <h4>Explainable Factors ("Why this decision?"):</h4>
+                    <ul class="contributing-factors-list" id="mdContributingFactors">
+                        <!-- Injected -->
+                    </ul>
+                </div>
+
+                <div class="tab-pane hidden" id="pane-exceptions">
+                    <h4>Detected Claim Exceptions:</h4>
+                    <div id="mdExceptionsList">
+                        <!-- Injected -->
+                    </div>
+                </div>
+
+                <div class="tab-pane hidden" id="pane-timeline">
+                    <h4>Chronological Activity Log:</h4>
+                    <ul class="activity-timeline-list" id="mdTimeline">
+                        <!-- Injected -->
+                    </ul>
+                </div>
+            </div>
+
+            <div class="modal-footer flex-between">
+                <div>
+                    <span class="info-lbl">Recommended Next Action:</span>
+                    <strong class="text-blue" id="mdRecommendation">-</strong>
+                </div>
+                <div class="action-btns">
+                    <button class="btn-action btn-approve" onclick="submitModalDecision('Approved')"><i class="fa-solid fa-check"></i> Approve Claim</button>
+                    <button class="btn-action btn-review" onclick="submitModalDecision('Under Review')"><i class="fa-solid fa-eye"></i> Under Review</button>
+                    <button class="btn-action btn-review" onclick="submitModalDecision('Request Documents')"><i class="fa-solid fa-file-import"></i> Request Docs</button>
+                    <button class="btn-action btn-reject" onclick="submitModalDecision('Rejected')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Application JavaScript -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
